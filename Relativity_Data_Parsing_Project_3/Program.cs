@@ -36,7 +36,11 @@ namespace Relativity_Data_Parsing_Project_3
 
         }
 
-
+        /// <summary>
+        /// Takes a file containing 2 times and an energy, and stores these values in a list
+        /// </summary>
+        /// <param name="filepath">Path to the file</param>
+        /// <returns>Returns all the Events as a List</returns>
         static List<Event> ParseFile(string filepath)
         {
             System.IO.StreamReader inputFile = null;
