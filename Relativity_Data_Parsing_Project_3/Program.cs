@@ -29,17 +29,36 @@ namespace Relativity_Data_Parsing_Project_3
         {
             string filepath = @"C:\Users\Josh\Downloads\p3data7.dat";
 
-            List<Event> Events = ParseFile(filepath);
+            List<Event> events = ParseFile(filepath);
 
             // take some quick data on the events
 
+            var goodEvents = (from item in events
+                              where item.energy >= 0
+                              select item)
+                              .ToList();
+            // get the positive energy events, store in a new List goodEvents
+
+            var badEvents = from item in events
+                            where item.energy < 0
+                            select item;
+
+            int numberOfBadEvents = badEvents.Count();
+
+            double averageEvergy = (from item in goodEvents select item.energy).Average();
+
+            double averaget2 = (from item in goodEvents select item.time_2).Average();
+
+            Console.WriteLine("Number of bad events: " + numberOfBadEvents);
+            Console.WriteLine("Average energies" + averageEvergy);
+            Console.WriteLine("Average t2: " + averaget2);
 
         }
 
         /// <summary>
         /// Takes a file containing 2 times and an energy, and stores these values in a list
         /// </summary>
-        /// <param name="filepath">Path to the file</param>
+        /// <param name="filepath">Path to the file to be parsed</param>
         /// <returns>Returns all the Events as a List</returns>
         static List<Event> ParseFile(string filepath)
         {
