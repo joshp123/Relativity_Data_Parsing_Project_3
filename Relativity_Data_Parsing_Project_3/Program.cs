@@ -19,8 +19,19 @@ namespace Relativity_Data_Parsing_Project_3
         /// </remarks>
         public struct Event
         {
+            /// <summary>
+            /// Time when particle detected at first detector. Units of nanoseconds
+            /// </summary>
             public double time_1;
+                        
+            /// <summary>
+            /// Time when particle detected at second detector. Units of nanoseconds
+            /// </summary>
             public double time_2;
+
+            /// <summary>
+            /// Kinetic energy of decayed particle. Units of MeV
+            /// </summary>
             public double energy;
         }
 
@@ -47,11 +58,13 @@ namespace Relativity_Data_Parsing_Project_3
 
             double averageEvergy = (from item in goodEvents select item.energy).Average();
 
-            double averaget2 = (from item in goodEvents select item.time_2).Average();
+            double averageT2 = (from item in goodEvents select item.time_2).Average();
 
             Console.WriteLine("Number of bad events: " + numberOfBadEvents);
             Console.WriteLine("Average energies" + averageEvergy);
-            Console.WriteLine("Average t2: " + averaget2);
+            Console.WriteLine("Average t2: " + averageT2);
+
+
 
         }
 
@@ -64,7 +77,7 @@ namespace Relativity_Data_Parsing_Project_3
         {
             System.IO.StreamReader inputFile = null;
 
-            var Events = new List<Event>();
+            var events = new List<Event>();
             // List of events
 
             try
@@ -91,15 +104,15 @@ namespace Relativity_Data_Parsing_Project_3
                     continue;
                 }
                 
-                var thisevent = new Event();
+                var thisEvent = new Event();
                 // declare variable for the event we're reading off this line
                 
                 // use a regular expression to extract the 3 variables
                 try
                 {
-                    thisevent.time_1 = Convert.ToDouble(Regex.Match(line, @"(\d*.?\d*)(?=\st2\s=)").ToString());
-                    thisevent.time_2 = Convert.ToDouble(Regex.Match(line, @"(\d*.?\d*)(?=\sE\s=)").ToString());
-                    thisevent.energy = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)$").ToString());
+                    thisEvent.time_1 = Convert.ToDouble(Regex.Match(line, @"(\d*.?\d*)(?=\st2\s=)").ToString());
+                    thisEvent.time_2 = Convert.ToDouble(Regex.Match(line, @"(\d*.?\d*)(?=\sE\s=)").ToString());
+                    thisEvent.energy = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)$").ToString());
 
                     // TODO: modify the regex to handle malformed files
 
@@ -115,11 +128,11 @@ namespace Relativity_Data_Parsing_Project_3
                     throw;
                 }
 
-                Events.Add(thisevent);
+                events.Add(thisEvent);
                 // append this event
             }
 
-            return Events;
+            return events;
             // should return a fully populated list
         }
     }
