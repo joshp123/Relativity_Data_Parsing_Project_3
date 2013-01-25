@@ -12,6 +12,12 @@ namespace Relativity_Data_Parsing_Project_3
     class Program
     {
         /// <summary>
+        /// Speed of Light. Units of meters per second.
+        /// </summary>
+        /// <remarks>Declaring this at Class level.</remarks>
+        const int speedOfLight = 299792458;
+        
+        /// <summary>
         /// Event structure
         /// </summary>
         /// <remarks>
@@ -41,6 +47,7 @@ namespace Relativity_Data_Parsing_Project_3
             string filepath = @"C:\Users\Josh\Downloads\p3data7.dat";
 
             List<Event> events = ParseFile(filepath);
+
 
             // take some quick data on the events
 
@@ -88,7 +95,8 @@ namespace Relativity_Data_Parsing_Project_3
             catch (System.IO.FileNotFoundException ex)
             {
                 // Put the more specific exception first.
-                 // TODO: implement exceptions fully. Prompt user for filepath (default to wherever i'm saving them), and if it doesn't exist return and reprompt
+                 // TODO: implement exceptions fully. Prompt user for filepath (default to wherever i'm saving them), and if it doesn't exist 
+                // return and reprompt
                 System.Console.WriteLine(ex.ToString());
             }
 
