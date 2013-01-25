@@ -11,12 +11,18 @@ namespace Relativity_Data_Parsing_Project_3
 {
     class Program
     {
+        // Declaring universal physical constants at Class level.
+        
         /// <summary>
         /// Speed of Light. Units of meters per second.
         /// </summary>
-        /// <remarks>Declaring this at Class level.</remarks>
         const int speedOfLight = 299792458;
-        
+
+        /// <summary>
+        /// Rest mass of positron. Units of MeV/c^2
+        /// </summary>
+        const double positronRestMass = 0.5109989;
+
         /// <summary>
         /// Event structure
         /// </summary>
@@ -25,6 +31,8 @@ namespace Relativity_Data_Parsing_Project_3
         /// </remarks>
         public struct Event
         {
+            private const int detectorSeparation = 3;
+   
             /// <summary>
             /// Time when particle detected at first detector. Units of nanoseconds
             /// </summary>
@@ -38,7 +46,30 @@ namespace Relativity_Data_Parsing_Project_3
             /// <summary>
             /// Kinetic energy of decayed particle. Units of MeV
             /// </summary>
+            /// <remarks>
+            /// This energy is a measured one.
+            /// </remarks>
             public double energy;
+
+            /// <summary>
+            /// Get the velocity of the detected particle in this event as a proportion of the speed of light
+            /// </summary>
+            /// <returns>Returns the velocity of the particle (unitless, as a fraction of c)</returns>
+            public double Beta()
+            {
+                double velocity = detectorSeparation / ((this.time_1 - this.time_2) * Math.Pow(10, -9));
+                return velocity / speedOfLight;
+            }
+
+            /// <summary>
+            /// Get the Lorentz factor for the detected particle
+            /// </summary>
+            /// <returns>
+            /// Returns the Lorentz factor for the detected particle in this event</returns>
+            public double Gamma()
+            {
+                return 1 / (Math.Sqrt(1 - Math.Pow(this.Beta(), 2)));
+            }
         }
 
         
