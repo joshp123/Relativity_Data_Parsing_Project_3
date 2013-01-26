@@ -57,7 +57,7 @@ namespace Relativity_Data_Parsing_Project_3
             /// <returns>Returns the velocity of the particle (unitless, as a fraction of c)</returns>
             public double Beta()
             {
-                double velocity = detectorSeparation / ((this.time_1 - this.time_2) * Math.Pow(10, -9));
+                double velocity = detectorSeparation / ((this.time_2 - this.time_1) * Math.Pow(10, -9));
                 return velocity / speedOfLight;
             }
 
@@ -70,6 +70,23 @@ namespace Relativity_Data_Parsing_Project_3
             {
                 return 1 / (Math.Sqrt(1 - Math.Pow(this.Beta(), 2)));
             }
+
+            public double ParticleLiftetime()
+            {
+                // TODO: write this
+                return -1;
+            }
+
+            public double Momentum()
+            {
+                return this.Gamma() * positronRestMass * this.Beta();
+            }
+
+            public double TransformEnergy()
+            {
+                return this.Gamma() * (this.energy - (this.Momentum() * this.Beta()));
+            }
+
         }
 
         
@@ -102,7 +119,9 @@ namespace Relativity_Data_Parsing_Project_3
             Console.WriteLine("Average energies" + averageEvergy);
             Console.WriteLine("Average t2: " + averageT2);
 
-
+            Console.WriteLine("Transforming Event [0]");
+            Console.WriteLine("Beta, Gamma, Momentum, Energy Transform");
+            Console.WriteLine("{0}, {1}, {2}, {3}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy());
 
         }
 
