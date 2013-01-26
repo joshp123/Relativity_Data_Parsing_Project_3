@@ -2,10 +2,16 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 
 using System.Text.RegularExpressions;
 // used for parsing the file
+/* 
+ * A wise man once said:
+ * "When you have a problem, and think 'I know, I'll solve it with regex',
+ * well, now you have two problems"
+ */
 
 namespace Relativity_Data_Parsing_Project_3
 {
@@ -77,6 +83,10 @@ namespace Relativity_Data_Parsing_Project_3
                 return -1;
             }
 
+            /// <summary>
+            /// Relativistic momentum of particle. Units of MeV/c
+            /// </summary>
+            /// <returns></returns>
             public double Momentum()
             {
                 return this.Gamma() * positronRestMass * this.Beta();
@@ -93,6 +103,7 @@ namespace Relativity_Data_Parsing_Project_3
         static void Main(string[] args)
         {
             string filepath = @"C:\Users\Josh\Downloads\p3data7.dat";
+            string filename = Path.GetFileName(filepath);
 
             List<Event> events = ParseFile(filepath);
 
@@ -123,6 +134,88 @@ namespace Relativity_Data_Parsing_Project_3
             Console.WriteLine("Beta, Gamma, Momentum, Energy Transform");
             Console.WriteLine("{0}, {1}, {2}, {3}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy());
 
+            var transformedEnergies = (from item in goodEvents
+                                       select item.TransformEnergy())
+                                      .ToList();
+
+            var lifetimes = (from item in goodEvents
+                             select item.ParticleLiftetime())
+                             .ToList();
+
+            // calculate some stats
+
+            var largestTransformedEnergy = transformedEnergies.Max();
+            var longestParticleLifetime = lifetimes.Max();
+
+            var averageTransformedEnergy = transformedEnergies.Average();
+            var averageParticleLifetime = lifetimes.Average();
+
+            var energyHistogram = ContinuousDataToHistogram(transformedEnergies);
+            var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
+
+            DictionaryToCSV(energyHistogram, filename);
+            // todo: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv
+
+                                      
+        }
+
+        /// <summary>
+        /// Takes a list of contiunous data, and returns it as a Histogram of frequencies
+        /// sorted by bins; where each bin represents approximately 1% of the total dataset
+        /// </summary>
+        /// <param name="data">A list of contiuous data to take a histogram of</param>
+        /// <returns>Returns a Histogram of frequencies of the inputted dataset</returns>
+        static Dictionary<double, int> ContinuousDataToHistogram(List<double> data)
+        {
+            Dictionary<double, int> histogram = new Dictionary<double, int>();
+            int numberOfBins = 100;
+
+            data.Sort();   
+            
+            double lowerBound = data.Min();
+            double upperBound = data.Max();
+            double rangeOfData = lowerBound - upperBound;
+                        
+            int interval = Convert.ToInt32(Math.Ceiling(rangeOfData / (data.Count * numberOfBins)));
+
+            // the interval between every 1% of the data
+
+            for (int i = 0; i < data.Count(); i += interval)
+            {
+                histogram[data.Min() + (i * interval)] = data.Count(item => ((i <= item) && item < (i + interval)) == true);
+            }
+
+            // data.Count(item => (item <= data.Min() + (interval * numberOfBins) == true);
+            // ignore this for now
+
+            // at this point histogram should have 100 keys, where they each represent the lower bound of an individual group
+            // and a count associated with them
+
+            return histogram;
+        }
+
+        static int DictionaryToCSV<TKey, TValue>(Dictionary<TKey, TValue> dictionary, string filename)
+        {
+            // Generic function that writes a CSV file from a Dictionary
+            // (by generic it takes literally any type of variable as an argument which is pretty damn awesome; strings, floats ints, custom types, you name it, it works)
+            // C# is the best
+
+            // Limitations: if your dictionary has over 1m key value pairs, it will hit excel's row limit
+            // If any of the objects in Dictionary contain "," this will break the CSV
+            String csv = String.Join(Environment.NewLine,
+                                     dictionary.Select(d => d.Key + "," + d.Value + ",")
+            );
+            // this will break if any of the arguments have "," in them
+
+            System.IO.File.WriteAllText("histogram_" + filename + "_.csv", csv);
+
+            // TODO: add exceptions here to catch when a file is open and unable to be overwritten
+            // so i don't end up with runtime errors everywhere when i'm debugging and forget to close excel laffo
+            
+            // TODO: update this with proper return codes
+            // TODO: prompt the user to see if they want to open the file after writing
+            
+            return -1;
         }
 
         /// <summary>
