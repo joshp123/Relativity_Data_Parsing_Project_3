@@ -182,7 +182,12 @@ namespace Relativity_Data_Parsing_Project_3
 
             for (int i = 0; i < data.Count(); i += interval)
             {
-                histogram[data.Min() + (i * interval)] = data.Count(item => ((i <= item) && item < (i + interval)) == true);
+                double binLowerBound = data.Min() + (i * interval);
+                double binUpperBound = data.Min() + ((i + 1) * interval);
+                int frequency = data.Count(item => ((item >= binLowerBound) && (item < binUpperBound)) == true);
+                histogram[binLowerBound] = frequency;
+
+                // using the dictionary key of the lower bound of the bin, count how many items belong in the bin using a LINQ query
             }
 
             // data.Count(item => (item <= data.Min() + (interval * numberOfBins) == true);
