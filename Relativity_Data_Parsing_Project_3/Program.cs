@@ -203,7 +203,7 @@ namespace Relativity_Data_Parsing_Project_3
 
             // the interval between every 1% of the data
 
-            for (int i = 0; i < rangeOfData; i += interval)
+            for (int i = 0; i < numberOfBins; i++)
             {
                 double binLowerBound = data.Min() + (i * interval);
                 double binUpperBound = binLowerBound + interval;
@@ -243,8 +243,10 @@ namespace Relativity_Data_Parsing_Project_3
             
             // TODO: update this with proper return codes
             // TODO: prompt the user to see if they want to open the file after writing
-            Console.WriteLine("Press 'y' to open the created file in your default editor.\nPress any other key to continue");
-            if (Console.ReadKey().KeyChar == 'y')
+            Console.WriteLine("Press 'y' to open the created file in your default editor.\nPress any other key to continue.");
+            
+            // the false argument to Console.ReadKey supresses the user-inputted character from being displayed
+            if (Console.ReadKey(false).KeyChar == 'y')
 	        {
                 Console.WriteLine("Loading file...");
                 System.Diagnostics.Process.Start(fullFilename);
