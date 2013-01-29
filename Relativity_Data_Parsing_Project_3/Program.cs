@@ -96,8 +96,8 @@ namespace Relativity_Data_Parsing_Project_3
             /// <returns></returns>
             public double ParticleLiftetime()
             {
-                // TODO: write this
                 return this.time_2 / this.Gamma();
+                // TODO: make this actually give the correct value
             }
 
             /// <summary>
@@ -117,6 +117,7 @@ namespace Relativity_Data_Parsing_Project_3
             public double TransformEnergy()
             {
                 return this.Gamma() * (this.TotalEnergy() - (this.Momentum() * this.Beta()));
+                // TODO: make this actually give the correct value
             }
 
         }
