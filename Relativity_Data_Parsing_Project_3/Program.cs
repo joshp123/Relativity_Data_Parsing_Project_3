@@ -5,6 +5,9 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 
+using System.Windows.Forms;
+// used for MsgBox alerting to exception
+
 using System.Text.RegularExpressions;
 // used for parsing the file
 /* 
@@ -236,13 +239,35 @@ namespace Relativity_Data_Parsing_Project_3
             // this will break if any of the arguments have "," in them
 
             string fullFilename = "histogram_" + filename + "_.csv";
-            System.IO.File.WriteAllText(fullFilename, csv);
 
-            // TODO: add exceptions here to catch when a file is open and unable to be overwritten
-            // so i don't end up with runtime errors everywhere when i'm debugging and forget to close excel laffo
-            
+            while (true)
+            {
+                try
+                {
+                    System.IO.File.WriteAllText(fullFilename, csv);
+                    break;
+                    // break out from the loop if file successfully loads
+                }
+                catch (System.IO.IOException ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    if (ex.ToString().Contains("because it is being used by another process"))
+                    {
+                        MessageBox.Show("The file is open in another program, and cannot be written. Please close the file or close the console window to continue");
+                        // i could add buttons and stuff for either "retry" or "abort" or something but
+                        // 1) effort and 2) then i'd be making a full windows forms app anyway.
+                    }
+                    continue;
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("An error occurred, please check the console for more. The file will be attempted to be written again when you click OK");
+                    continue;
+                }
+            }
+           
             // TODO: update this with proper return codes
-            // TODO: prompt the user to see if they want to open the file after writing
+
             Console.WriteLine("Press 'y' to open the created file in your default editor.\nPress any other key to continue.");
             
             // the false argument to Console.ReadKey supresses the user-inputted character from being displayed
@@ -322,5 +347,6 @@ namespace Relativity_Data_Parsing_Project_3
             return events;
             // should return a fully populated list
         }
+
     }
 }
