@@ -180,9 +180,7 @@ namespace Relativity_Data_Parsing_Project_3
             // var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
 
             DictionaryToCSV(energyHistogram, filename);
-            // TODO: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv
-
-                                      
+            // TODO: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv                  
         }
 
         /// <summary>
@@ -225,14 +223,23 @@ namespace Relativity_Data_Parsing_Project_3
             return histogram;
         }
 
+        /// <summary>
+        /// Generic function to write a CSV file from a dictionary. Prompts user to open file after it has been written.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the dictionary's Key</typeparam>
+        /// <typeparam name="TValue">The type of the dictionary's Value</typeparam>
+        /// <param name="dictionary">The dictionary to be written</param>
+        /// <param name="filename">The filename to write the file to</param>
+        /// <remarks>Current limitations:
+        /// - if your dictionary has over 1m key value pairs, it will hit excel's row limit; 
+        /// - if any of the objects in Dictionary contain "," this will break the CSV
+        /// - it only saves to the current working directory because i can't be fucked implementing
+        /// a Windows forms filepicker and making the whole app windows forms</remarks>
+        /// <returns>Returns -1 because i haven't actually written the bit to do return codes yet</returns>
+        /// 
         static int DictionaryToCSV<TKey, TValue>(Dictionary<TKey, TValue> dictionary, string filename)
         {
-            // Generic function that writes a CSV file from a Dictionary
-            // (by generic it takes literally any type of variable as an argument which is pretty damn awesome; strings, floats ints, custom types, you name it, it works)
-            // C# is the best
 
-            // Limitations: if your dictionary has over 1m key value pairs, it will hit excel's row limit
-            // If any of the objects in Dictionary contain "," this will break the CSV
             String csv = String.Join(Environment.NewLine,
                                      dictionary.Select(d => d.Key + "," + d.Value + ",")
             );
@@ -245,6 +252,18 @@ namespace Relativity_Data_Parsing_Project_3
                 try
                 {
                     System.IO.File.WriteAllText(fullFilename, csv);
+
+                    // this next block about opening it should only execute if there's no exceptions thrown from writing the file
+
+                    Console.WriteLine("Press 'y' to open the created file in your default editor.\nPress any other key to continue.");
+
+                    // the false argument to Console.ReadKey supresses the user-inputted character from being displayed
+                    if (Console.ReadKey(false).KeyChar == 'y')
+                    {
+                        Console.WriteLine("Loading file...");
+                        System.Diagnostics.Process.Start(fullFilename);
+                    }
+
                     break;
                     // break out from the loop if file successfully loads
                 }
@@ -267,14 +286,7 @@ namespace Relativity_Data_Parsing_Project_3
            
             // TODO: update this with proper return codes
 
-            Console.WriteLine("Press 'y' to open the created file in your default editor.\nPress any other key to continue.");
-            
-            // the false argument to Console.ReadKey supresses the user-inputted character from being displayed
-            if (Console.ReadKey(false).KeyChar == 'y')
-	        {
-                Console.WriteLine("Loading file...");
-                System.Diagnostics.Process.Start(fullFilename);
-	        }
+
             return -1;
         }
 
