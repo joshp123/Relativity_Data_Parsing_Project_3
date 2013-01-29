@@ -169,8 +169,12 @@ namespace Relativity_Data_Parsing_Project_3
             var averageTransformedEnergy = transformedEnergies.Average();
             var averageParticleLifetime = lifetimes.Average();
 
+            // TODO: i mean i could write these to a separate file isntead of the console but it's
+            // kinda pointless having a 4 line text file with this data but it's also stupid to
+            // stick it in a .csv file and deliberately break it to shoehorn some stats in there
+
             var energyHistogram = ContinuousDataToHistogram(transformedEnergies);
-            var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
+            // var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
 
             DictionaryToCSV(energyHistogram, filename);
             // TODO: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv
@@ -187,22 +191,22 @@ namespace Relativity_Data_Parsing_Project_3
         static Dictionary<double, int> ContinuousDataToHistogram(List<double> data)
         {
             Dictionary<double, int> histogram = new Dictionary<double, int>();
-            int numberOfBins = 100;
+            int numberOfBins = 3;
             // TODO: implement a clever algorithm to determine bin numbers and sizes
             data.Sort();   
             
             double lowerBound = data.Min();
             double upperBound = data.Max();
-            double rangeOfData = lowerBound - upperBound;
+            double rangeOfData = upperBound - lowerBound;
                         
-            int interval = Convert.ToInt32(Math.Ceiling(rangeOfData / (data.Count * numberOfBins)));
+            int interval = Convert.ToInt32(Math.Ceiling(rangeOfData / numberOfBins));
 
             // the interval between every 1% of the data
 
             for (int i = 0; i < rangeOfData; i += interval)
             {
                 double binLowerBound = data.Min() + (i * interval);
-                double binUpperBound = data.Min() + ((i + 1) * interval);
+                double binUpperBound = binLowerBound + interval;
                 int frequency = data.Count(item => ((item >= binLowerBound) && (item < binUpperBound)) == true);
                 histogram[binLowerBound] = frequency;
 
@@ -231,14 +235,20 @@ namespace Relativity_Data_Parsing_Project_3
             );
             // this will break if any of the arguments have "," in them
 
-            System.IO.File.WriteAllText("histogram_" + filename + "_.csv", csv);
+            string fullFilename = "histogram_" + filename + "_.csv";
+            System.IO.File.WriteAllText(fullFilename, csv);
 
             // TODO: add exceptions here to catch when a file is open and unable to be overwritten
             // so i don't end up with runtime errors everywhere when i'm debugging and forget to close excel laffo
             
             // TODO: update this with proper return codes
             // TODO: prompt the user to see if they want to open the file after writing
-            
+            Console.WriteLine("Press 'y' to open the created file in your default editor.\nPress any other key to continue");
+            if (Console.ReadKey().KeyChar == 'y')
+	        {
+                Console.WriteLine("Loading file...");
+                System.Diagnostics.Process.Start(fullFilename);
+	        }
             return -1;
         }
 
