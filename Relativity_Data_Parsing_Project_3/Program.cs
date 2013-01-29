@@ -51,7 +51,7 @@ namespace Relativity_Data_Parsing_Project_3
             public double time_2;
 
             /// <summary>
-            /// Kinetic energy of decayed particle. Units of MeV
+            /// Kinetic energy of decayed particle (positron). Units of MeV
             /// </summary>
             /// <remarks>
             /// This energy is a measured one.
@@ -59,7 +59,16 @@ namespace Relativity_Data_Parsing_Project_3
             public double energy;
 
             /// <summary>
-            /// Get the velocity of the detected particle in this event as a proportion of the speed of light
+            /// Total ernergy of the decayed particle (here, positron)
+            /// </summary>
+            /// <returns>Returns the total (kinetic energy + mass energy) energy of the particle that decayed</returns>
+            public double TotalEnergy()
+            {
+                return this.energy + positronRestMass;
+            }
+
+            /// <summary>
+            /// Get the velocity of the detected (pre-decay) particle in this event as a proportion of the speed of light
             /// </summary>
             /// <returns>Returns the velocity of the particle (unitless, as a fraction of c)</returns>
             public double Beta()
@@ -85,17 +94,18 @@ namespace Relativity_Data_Parsing_Project_3
             }
 
             /// <summary>
-            /// Relativistic momentum of particle. Units of MeV/c
+            /// Relativistic momentum of decayed particle. Units of MeV (it is multiplied by C)
             /// </summary>
-            /// <returns></returns>
+            /// <returns>Returns the momentum of the decayed particle in the lab frame multiplied by c</returns>
             public double Momentum()
             {
-                return this.Gamma() * positronRestMass * this.Beta();
+                return Math.Sqrt(Math.Pow(this.TotalEnergy(), 2) - Math.Pow(positronRestMass, 2));
+                // Square root of [ (energy^2) - m_0^2) ]
             }
 
             public double TransformEnergy()
             {
-                return this.Gamma() * (this.energy - (this.Momentum() * this.Beta()));
+                return this.Gamma() * (this.TotalEnergy() - (this.Momentum() * this.Beta()));
             }
 
         }
@@ -135,26 +145,26 @@ namespace Relativity_Data_Parsing_Project_3
             Console.WriteLine("Beta, Gamma, Momentum, Energy Transform");
             Console.WriteLine("{0}, {1}, {2}, {3}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy());
 
-            var transformedEnergies = (from item in goodEvents
-                                       select item.TransformEnergy())
-                                      .ToList();
+            //var transformedEnergies = (from item in goodEvents
+            //                           select item.TransformEnergy())
+            //                          .ToList();
 
-            var lifetimes = (from item in goodEvents
-                             select item.ParticleLiftetime())
-                             .ToList();
+            //var lifetimes = (from item in goodEvents
+            //                 select item.ParticleLiftetime())
+            //                 .ToList();
 
-            // calculate some stats
+            //// calculate some stats
 
-            var largestTransformedEnergy = transformedEnergies.Max();
-            var longestParticleLifetime = lifetimes.Max();
+            //var largestTransformedEnergy = transformedEnergies.Max();
+            //var longestParticleLifetime = lifetimes.Max();
 
-            var averageTransformedEnergy = transformedEnergies.Average();
-            var averageParticleLifetime = lifetimes.Average();
+            //var averageTransformedEnergy = transformedEnergies.Average();
+            //var averageParticleLifetime = lifetimes.Average();
 
-            var energyHistogram = ContinuousDataToHistogram(transformedEnergies);
-            var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
+            //var energyHistogram = ContinuousDataToHistogram(transformedEnergies);
+            //var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
 
-            DictionaryToCSV(energyHistogram, filename);
+            //DictionaryToCSV(energyHistogram, filename);
             // todo: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv
 
                                       
