@@ -34,6 +34,7 @@ namespace Relativity_Data_Parsing_Project_3
         /// </summary>
         /// <remarks>
         /// Contains fields for times and energy
+        /// TODO: measure performance of class vs struct
         /// </remarks>
         public struct Event
         {
@@ -285,7 +286,7 @@ namespace Relativity_Data_Parsing_Project_3
                 }
 
                 events.Add(thisEvent);
-                // append this event
+                // append this event to the list of events
             }
 
             return events;
