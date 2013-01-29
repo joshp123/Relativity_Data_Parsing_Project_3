@@ -87,10 +87,14 @@ namespace Relativity_Data_Parsing_Project_3
                 return 1 / (Math.Sqrt(1 - Math.Pow(this.Beta(), 2)));
             }
 
+            /// <summary>
+            /// The lifetime of the pre-decay particle in it's own reference frame
+            /// </summary>
+            /// <returns></returns>
             public double ParticleLiftetime()
             {
                 // TODO: write this
-                return -1;
+                return this.time_2 / this.Gamma();
             }
 
             /// <summary>
@@ -103,6 +107,10 @@ namespace Relativity_Data_Parsing_Project_3
                 // Square root of [ (energy^2) - m_0^2) ]
             }
 
+            /// <summary>
+            /// Calculate the total energy of the decayed particle (here, positron), in its own frame of reference
+            /// </summary>
+            /// <returns></returns>
             public double TransformEnergy()
             {
                 return this.Gamma() * (this.TotalEnergy() - (this.Momentum() * this.Beta()));
@@ -143,29 +151,29 @@ namespace Relativity_Data_Parsing_Project_3
 
             Console.WriteLine("Transforming Event [0]");
             Console.WriteLine("Beta, Gamma, Momentum, Energy Transform");
-            Console.WriteLine("{0}, {1}, {2}, {3}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy());
+            Console.WriteLine("{0}, {1}, {2}, {3}, {4}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy(), events[0].ParticleLiftetime());
 
-            //var transformedEnergies = (from item in goodEvents
-            //                           select item.TransformEnergy())
-            //                          .ToList();
+            var transformedEnergies = (from item in goodEvents
+                                       select item.TransformEnergy())
+                                      .ToList();
 
-            //var lifetimes = (from item in goodEvents
-            //                 select item.ParticleLiftetime())
-            //                 .ToList();
+            var lifetimes = (from item in goodEvents
+                             select item.ParticleLiftetime())
+                             .ToList();
 
-            //// calculate some stats
+            // calculate some stats
 
-            //var largestTransformedEnergy = transformedEnergies.Max();
-            //var longestParticleLifetime = lifetimes.Max();
+            var largestTransformedEnergy = transformedEnergies.Max();
+            var longestParticleLifetime = lifetimes.Max();
 
-            //var averageTransformedEnergy = transformedEnergies.Average();
-            //var averageParticleLifetime = lifetimes.Average();
+            var averageTransformedEnergy = transformedEnergies.Average();
+            var averageParticleLifetime = lifetimes.Average();
 
-            //var energyHistogram = ContinuousDataToHistogram(transformedEnergies);
-            //var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
+            var energyHistogram = ContinuousDataToHistogram(transformedEnergies);
+            var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
 
-            //DictionaryToCSV(energyHistogram, filename);
-            // todo: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv
+            DictionaryToCSV(energyHistogram, filename);
+            // TODO: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv
 
                                       
         }
@@ -180,7 +188,7 @@ namespace Relativity_Data_Parsing_Project_3
         {
             Dictionary<double, int> histogram = new Dictionary<double, int>();
             int numberOfBins = 100;
-
+            // TODO: implement a clever algorithm to determine bin numbers and sizes
             data.Sort();   
             
             double lowerBound = data.Min();
@@ -191,7 +199,7 @@ namespace Relativity_Data_Parsing_Project_3
 
             // the interval between every 1% of the data
 
-            for (int i = 0; i < data.Count(); i += interval)
+            for (int i = 0; i < rangeOfData; i += interval)
             {
                 double binLowerBound = data.Min() + (i * interval);
                 double binUpperBound = data.Min() + ((i + 1) * interval);
