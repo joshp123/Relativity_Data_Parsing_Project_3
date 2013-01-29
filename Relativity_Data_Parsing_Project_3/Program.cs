@@ -248,7 +248,7 @@ namespace Relativity_Data_Parsing_Project_3
                     break;
                     // break out from the loop if file successfully loads
                 }
-                catch (System.IO.IOException ex)
+                catch (Exception ex)
                 {
                     Console.WriteLine(ex.ToString());
                     if (ex.ToString().Contains("because it is being used by another process"))
@@ -257,11 +257,10 @@ namespace Relativity_Data_Parsing_Project_3
                         // i could add buttons and stuff for either "retry" or "abort" or something but
                         // 1) effort and 2) then i'd be making a full windows forms app anyway.
                     }
-                    continue;
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("An error occurred, please check the console for more. The file will be attempted to be written again when you click OK");
+                    else
+                    {
+                        MessageBox.Show("An error occurred, please check the console for more. The file will be attempted to be written again when you click OK");
+                    }
                     continue;
                 }
             }
@@ -347,6 +346,5 @@ namespace Relativity_Data_Parsing_Project_3
             return events;
             // should return a fully populated list
         }
-
     }
 }
