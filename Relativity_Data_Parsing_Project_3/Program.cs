@@ -5,6 +5,9 @@ using System.Text;
 using System.IO;
 using System.Threading.Tasks;
 
+using System.Diagnostics;
+// for timer
+
 using System.Windows.Forms;
 // used for MsgBox alerting to exception
 
@@ -77,8 +80,7 @@ namespace Relativity_Data_Parsing_Project_3
             public double Beta()
             {
                 double velocity = detectorSeparation / ((this.time_2 - this.time_1) * Math.Pow(10, -9));
-                double beta = velocity / speedOfLight;
-                return beta;
+                return velocity / speedOfLight;
             }
 
             /// <summary>
@@ -129,7 +131,13 @@ namespace Relativity_Data_Parsing_Project_3
             string filepath = @"C:\Users\Josh\Downloads\p3data1M.dat";
             string filename = Path.GetFileName(filepath);
 
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
             List<Event> events = ParseFile(filepath);
+            sw.Stop();
+
+            Console.WriteLine("File read completed, {0} events parsed in {1} seconds", events.Count, sw.Elapsed.ToString());
 
 
             // take some quick data on the events
@@ -150,9 +158,9 @@ namespace Relativity_Data_Parsing_Project_3
 
             double averageT2 = (from item in goodEvents select item.time_2).Average();
             Console.WriteLine("\nStep 1 Calculations: ");
-            Console.WriteLine("Number of bad events: " + numberOfBadEvents);
-            Console.WriteLine("Average energies" + averageEvergy + " MeV");
-            Console.WriteLine("Average t2: " + averageT2 + " ns");
+            Console.WriteLine("Number of bad events: \t" + numberOfBadEvents);
+            Console.WriteLine("Average kinetic energy \t= " + averageEvergy + " MeV");
+            Console.WriteLine("Average t2 \t\t=  " + averageT2 + " ns");
 
             Console.WriteLine("Transforming Event [0]");
             Console.WriteLine("Beta, Gamma, Momentum, Energy Transform (MeV), Particle Lifetime (ns)");
@@ -174,10 +182,10 @@ namespace Relativity_Data_Parsing_Project_3
             var averageTransformedEnergy = transformedEnergies.Average();
             var averageParticleLifetime = lifetimes.Average();
             Console.WriteLine("\nStep 2 Calculations: ");
-            Console.WriteLine("Largest transformed energy = " + largestTransformedEnergy + " MeV");
-            Console.WriteLine("Longest particle lifetime = " + longestParticleLifetime + " ns");
-            Console.WriteLine("Average transformed energy = " + averageTransformedEnergy + " MeV");
-            Console.WriteLine("Average particle lifetime = " + averageParticleLifetime + " ns");
+            Console.WriteLine("Largest transformed energy \t= " + largestTransformedEnergy + " MeV");
+            Console.WriteLine("Longest particle lifetime \t= " + longestParticleLifetime + " ns");
+            Console.WriteLine("Average transformed energy \t= " + averageTransformedEnergy + " MeV");
+            Console.WriteLine("Average particle lifetime \t= " + averageParticleLifetime + " ns");
 
             // TODO: i mean i could write these to a separate file isntead of the console but it's
             // kinda pointless having a 4 line text file with this data but it's also stupid to
@@ -324,6 +332,8 @@ namespace Relativity_Data_Parsing_Project_3
 
             string line;
             
+
+
             // read the full file line by line
             while ((line = inputFile.ReadLine()) != null)
             {
@@ -340,15 +350,62 @@ namespace Relativity_Data_Parsing_Project_3
                 // use a regular expression to extract the 3 variables
                 // regex for times needs to handle negative times too - theres some in the 1M data file which if
                 // not accounted for give v > c (i.e. if the time were positive)
+
+
+                var eventData = (from item in line.Split(' ')
+                                 where item != ""
+                                 select item).ToArray();
+                /*
+                 * Should return a string array of the form:
+                 * eventData[0] = Event:
+                   eventData[1] = 24633
+                   eventData[2] = t1
+                   eventData[3] = =
+                   eventData[4] = -2.450189679
+                   eventData[5] = t2
+                   eventData[6] = = 
+                   eventData[7] = 7.559348615
+                   eventData[8] = E
+                   eventData[9] = = 
+                   eventData[10] = 2678.678075
+                 * 
+                 * the LINQ query to ignore "" means that two/three consecutive spaces shouldn't break it
+                 * 
+                 * this isn't quite as robust as the regex version but should be fast as fuck
+                 * 
+                 */
+
                 try
                 {
-                    thisEvent.time_1 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\st2\s=)").ToString());
-                    thisEvent.time_2 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\sE\s=)").ToString());
-                    thisEvent.energy = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)$").ToString());
+                    thisEvent.time_1 = Double.Parse(eventData[4]);
+                    thisEvent.time_2 = Double.Parse(eventData[7]);
+                    thisEvent.energy = Double.Parse(eventData[10]);
+                }
+                catch (Exception)
+                {
+                    
+                    throw;
+                }
+
+
+                try
+                {
+                    
+                    //thisEvent.time_1 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\st2\s=)", RegexOptions.Compiled).ToString());
+                    //thisEvent.time_2 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\sE\s=)", RegexOptions.Compiled).ToString());
+                    //thisEvent.energy = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)$", RegexOptions.Compiled).ToString());
 
                     // TODO: (optional since the files aren't supposed to have errors) modify the regex to handle malformed files
 
                     // TODO: (optional) figure out how long the regex is taking and maybe use RegexOptions.Compiled isntead: http://www.dotnetperls.com/regexoptions-compiled
+                    // Normal regex ~= 5m40s to parse 1m lines
+                    // Regex.Compiled ~= 3m30s
+                    // Regex.Matches (read all 4 numbers separately) ~= _
+                    // String.Split ~= 
+
+
+                    // try regex to assembly http://msdn.microsoft.com/en-us/library/9ek5zak6.aspx
+                    // ^ dont do this its horrible and messy lol
                 }
                 catch (Exception)
                 {
