@@ -128,16 +128,24 @@ namespace Relativity_Data_Parsing_Project_3
         
         static void Main(string[] args)
         {
-            string filepath = @"C:\Users\Josh\Downloads\p3data1M.dat";
-            string filename = Path.GetFileName(filepath);
+            string[] filepaths = new string[] {@"C:\Users\Josh\Downloads\p3data7.dat", @"C:\Users\Josh\Downloads\p3data100.dat",
+                                               @"C:\Users\Josh\Downloads\p3data1M.dat", @"C:\Users\Josh\Downloads\p3data10M.dat"};
+            string filename = Path.GetFileName(filepaths.Last());
 
             Stopwatch sw = new Stopwatch();
 
             sw.Start();
-            List<Event> events = ParseFile(filepath);
+
+            List<Event> events = new List<Event>();
+            foreach (var file in filepaths)
+            {
+                events.Concat(ParseFile(file));
+                // parse earch file specified and add the list returned from ParseFile() to the end of the existing list
+            }
+            
             sw.Stop();
 
-            Console.WriteLine("File read completed, {0} events parsed in {1} seconds", events.Count, sw.Elapsed.ToString());
+            Console.WriteLine("File read completed, {0} events parsed in {1} seconds", events.Count, sw.ElapsedMilliseconds.ToString());
 
 
             // take some quick data on the events
@@ -312,14 +320,15 @@ namespace Relativity_Data_Parsing_Project_3
         /// <returns>Returns all the Events as a List</returns>
         static List<Event> ParseFile(string filepath)
         {
-            System.IO.StreamReader inputFile = null;
-
             var events = new List<Event>();
             // List of events
 
+            // declare our IEnumerable of fileLines to parallel iterate through outside try loop
+            IEnumerable<string> fileLines = null;
+
             try
             {
-                inputFile = new System.IO.StreamReader(filepath);
+                fileLines = File.ReadLines(filepath);
             }
 
             catch (System.IO.FileNotFoundException ex)
@@ -330,99 +339,115 @@ namespace Relativity_Data_Parsing_Project_3
                 System.Console.WriteLine(ex.ToString());
             }
 
-            string line;
+            //     Normal regex ~= 5m40s to parse 1m lines
+            //     Regex.Compiled ~= 3m30s
+            //     Regex.Matches (read all 4 numbers separately) ~= didn't bother implementing lol string split blows this out the water
+            //     String.Split ~= 3000ms (lmao)
+            //     ParallelForeach String.Split still about ~3000ms so trivial benefit but i can't be arsed undoing that
+
+            Parallel.ForEach(fileLines, line =>
+            {
+                // lock events to avoid race condition
+
+                lock (events)
+                {
+                    if ((String.IsNullOrEmpty(line)) || (line[0] == '#'))
+                    {
+                        // do nothing
+                    }
+                    else
+                    {
+                        Event thisEvent = ParseLine(line);
+                        events.Add(thisEvent);
+                    }
+                }
+            });
             
 
 
-            // read the full file line by line
-            while ((line = inputFile.ReadLine()) != null)
-            {
                 // ignore header lines (lines beginning with '#' or blank lines
                 // for some reason it has the line as "" and it's not equal to null and doesn't terminate so that's why there's the length thing idfk
-                if ((line.Length == 0) || (line[0] == '#'))
-                {
-                    continue;
-                }
-                
-                var thisEvent = new Event();
-                // declare variable for the event we're reading off this line
-                
-                // use a regular expression to extract the 3 variables
-                // regex for times needs to handle negative times too - theres some in the 1M data file which if
-                // not accounted for give v > c (i.e. if the time were positive)
 
-
-                var eventData = (from item in line.Split(' ')
-                                 where item != ""
-                                 select item).ToArray();
-                /*
-                 * Should return a string array of the form:
-                 * eventData[0] = Event:
-                   eventData[1] = 24633
-                   eventData[2] = t1
-                   eventData[3] = =
-                   eventData[4] = -2.450189679
-                   eventData[5] = t2
-                   eventData[6] = = 
-                   eventData[7] = 7.559348615
-                   eventData[8] = E
-                   eventData[9] = = 
-                   eventData[10] = 2678.678075
-                 * 
-                 * the LINQ query to ignore "" means that two/three consecutive spaces shouldn't break it
-                 * 
-                 * this isn't quite as robust as the regex version but should be fast as fuck
-                 * 
-                 */
-
-                try
-                {
-                    thisEvent.time_1 = Double.Parse(eventData[4]);
-                    thisEvent.time_2 = Double.Parse(eventData[7]);
-                    thisEvent.energy = Double.Parse(eventData[10]);
-                }
-                catch (Exception)
-                {
-                    
-                    throw;
-                }
-
-
-                try
-                {
-                    
-                    //thisEvent.time_1 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\st2\s=)", RegexOptions.Compiled).ToString());
-                    //thisEvent.time_2 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\sE\s=)", RegexOptions.Compiled).ToString());
-                    //thisEvent.energy = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)$", RegexOptions.Compiled).ToString());
-
-                    // TODO: (optional since the files aren't supposed to have errors) modify the regex to handle malformed files
-
-                    // TODO: (optional) figure out how long the regex is taking and maybe use RegexOptions.Compiled isntead: http://www.dotnetperls.com/regexoptions-compiled
-                    // Normal regex ~= 5m40s to parse 1m lines
-                    // Regex.Compiled ~= 3m30s
-                    // Regex.Matches (read all 4 numbers separately) ~= _
-                    // String.Split ~= 
-
-
-                    // try regex to assembly http://msdn.microsoft.com/en-us/library/9ek5zak6.aspx
-                    // ^ dont do this its horrible and messy lol
-                }
-                catch (Exception)
-                {
-                    // throw exception if values don't cast to floats
-                    // write the errant values and line number here 
-                    // Error on line xxx:
-                    // t1 = xxx t2 = e = 
-                    // <line>
-                    throw;
-                }
-
-                events.Add(thisEvent);
-                // append this event to the list of events
-            }
 
             return events;
             // should return a fully populated list
+        }
+
+        private static Event ParseLine(string line)
+        {
+            var thisEvent = new Event();
+            // declare variable for the event we're reading off this line
+
+            // use a regular expression to extract the 3 variables
+            // regex for times needs to handle negative times too - theres some in the 1M data file which if
+            // not accounted for give v > c (i.e. if the time were positive)
+
+
+            var eventData = (from item in line.Split(' ')
+                             where item != ""
+                             select item).ToArray();
+            /*
+             * Should return a string array of the form:
+             * eventData[0] = Event:
+               eventData[1] = 24633
+               eventData[2] = t1
+               eventData[3] = =
+               eventData[4] = -2.450189679
+               eventData[5] = t2
+               eventData[6] = = 
+               eventData[7] = 7.559348615
+               eventData[8] = E
+               eventData[9] = = 
+               eventData[10] = 2678.678075
+             * 
+             * the LINQ query to ignore "" means that two/three consecutive spaces shouldn't break it
+             * 
+             * this isn't quite as robust as the regex version but should be fast as fuck
+             * 
+             */
+
+            try
+            {
+                thisEvent.time_1 = Double.Parse(eventData[4]);
+                thisEvent.time_2 = Double.Parse(eventData[7]);
+                thisEvent.energy = Double.Parse(eventData[10]);
+            }
+            catch (Exception)
+            {
+                Console.WriteLine("Malformed data on line with following contents:\n" + line);
+                Console.WriteLine("Terminating, press any key to continue");
+                Console.ReadKey();
+                // read a key but dont' do anything with it; equiv to pause
+                Application.Exit();
+            }
+
+            return thisEvent;
+            
+            // Old lol regex code for posterity
+            //try
+            //{
+
+            //    thisEvent.time_1 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\st2\s=)", RegexOptions.Compiled).ToString());
+            //    thisEvent.time_2 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\sE\s=)", RegexOptions.Compiled).ToString());
+            //    thisEvent.energy = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)$", RegexOptions.Compiled).ToString());
+
+            //     TODO: (optional since the files aren't supposed to have errors) modify the regex to handle malformed files
+
+            //     TODO: (optional) figure out how long the regex is taking and maybe use RegexOptions.Compiled isntead: http://www.dotnetperls.com/regexoptions-compiled
+
+
+            //     try regex to assembly http://msdn.microsoft.com/en-us/library/9ek5zak6.aspx
+            //     ^ dont do this its horrible and messy lol
+            //}
+            //catch (Exception)
+            //{
+            //     throw exception if values don't cast to floats
+            //     write the errant values and line number here 
+            //     Error on line xxx:
+            //     t1 = xxx t2 = e = 
+            //     <line>
+            //    throw;
+            //}
         }
     }
 }
