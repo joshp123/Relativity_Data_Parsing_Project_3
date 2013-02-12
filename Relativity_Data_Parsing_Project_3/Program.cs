@@ -37,7 +37,7 @@ namespace Relativity_Data_Parsing_Project_3
         /// </summary>
         /// <remarks>
         /// Contains fields for times and energy
-        /// TODO: measure performance of class vs struct
+        /// TODO: (optional) measure performance of class vs struct
         /// </remarks>
         public struct Event
         {
@@ -77,7 +77,8 @@ namespace Relativity_Data_Parsing_Project_3
             public double Beta()
             {
                 double velocity = detectorSeparation / ((this.time_2 - this.time_1) * Math.Pow(10, -9));
-                return velocity / speedOfLight;
+                double beta = velocity / speedOfLight;
+                return beta;
             }
 
             /// <summary>
@@ -97,7 +98,6 @@ namespace Relativity_Data_Parsing_Project_3
             public double ParticleLiftetime()
             {
                 return this.time_2 / this.Gamma();
-                // TODO: make this actually give the correct value
             }
 
             /// <summary>
@@ -123,9 +123,10 @@ namespace Relativity_Data_Parsing_Project_3
         }
 
         
+        
         static void Main(string[] args)
         {
-            string filepath = @"C:\Users\Josh\Downloads\p3data7.dat";
+            string filepath = @"C:\Users\Josh\Downloads\p3data1M.dat";
             string filename = Path.GetFileName(filepath);
 
             List<Event> events = ParseFile(filepath);
@@ -148,13 +149,13 @@ namespace Relativity_Data_Parsing_Project_3
             double averageEvergy = (from item in goodEvents select item.energy).Average();
 
             double averageT2 = (from item in goodEvents select item.time_2).Average();
-
+            Console.WriteLine("\nStep 1 Calculations: ");
             Console.WriteLine("Number of bad events: " + numberOfBadEvents);
-            Console.WriteLine("Average energies" + averageEvergy);
-            Console.WriteLine("Average t2: " + averageT2);
+            Console.WriteLine("Average energies" + averageEvergy + " MeV");
+            Console.WriteLine("Average t2: " + averageT2 + " ns");
 
             Console.WriteLine("Transforming Event [0]");
-            Console.WriteLine("Beta, Gamma, Momentum, Energy Transform");
+            Console.WriteLine("Beta, Gamma, Momentum, Energy Transform (MeV), Particle Lifetime (ns)");
             Console.WriteLine("{0}, {1}, {2}, {3}, {4}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy(), events[0].ParticleLiftetime());
 
             var transformedEnergies = (from item in goodEvents
@@ -172,6 +173,11 @@ namespace Relativity_Data_Parsing_Project_3
 
             var averageTransformedEnergy = transformedEnergies.Average();
             var averageParticleLifetime = lifetimes.Average();
+            Console.WriteLine("\nStep 2 Calculations: ");
+            Console.WriteLine("Largest transformed energy = " + largestTransformedEnergy + " MeV");
+            Console.WriteLine("Longest particle lifetime = " + longestParticleLifetime + " ns");
+            Console.WriteLine("Average transformed energy = " + averageTransformedEnergy + " MeV");
+            Console.WriteLine("Average particle lifetime = " + averageParticleLifetime + " ns");
 
             // TODO: i mean i could write these to a separate file isntead of the console but it's
             // kinda pointless having a 4 line text file with this data but it's also stupid to
@@ -193,7 +199,7 @@ namespace Relativity_Data_Parsing_Project_3
         static Dictionary<double, int> ContinuousDataToHistogram(List<double> data)
         {
             Dictionary<double, int> histogram = new Dictionary<double, int>();
-            int numberOfBins = 3;
+            int numberOfBins = 100;
             // TODO: implement a clever algorithm to determine bin numbers and sizes
             data.Sort();   
             
@@ -311,7 +317,7 @@ namespace Relativity_Data_Parsing_Project_3
             catch (System.IO.FileNotFoundException ex)
             {
                 // Put the more specific exception first.
-                 // TODO: implement exceptions fully. Prompt user for filepath (default to wherever i'm saving them), and if it doesn't exist 
+                 // TODO: (optional) implement exceptions fully. Prompt user for filepath (default to wherever i'm saving them), and if it doesn't exist 
                 // return and reprompt
                 System.Console.WriteLine(ex.ToString());
             }
@@ -332,13 +338,15 @@ namespace Relativity_Data_Parsing_Project_3
                 // declare variable for the event we're reading off this line
                 
                 // use a regular expression to extract the 3 variables
+                // regex for times needs to handle negative times too - theres some in the 1M data file which if
+                // not accounted for give v > c (i.e. if the time were positive)
                 try
                 {
-                    thisEvent.time_1 = Convert.ToDouble(Regex.Match(line, @"(\d*.?\d*)(?=\st2\s=)").ToString());
-                    thisEvent.time_2 = Convert.ToDouble(Regex.Match(line, @"(\d*.?\d*)(?=\sE\s=)").ToString());
+                    thisEvent.time_1 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\st2\s=)").ToString());
+                    thisEvent.time_2 = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)(?=\sE\s=)").ToString());
                     thisEvent.energy = Convert.ToDouble(Regex.Match(line, @"(-?\d*.?\d*)$").ToString());
 
-                    // TODO: modify the regex to handle malformed files
+                    // TODO: (optional since the files aren't supposed to have errors) modify the regex to handle malformed files
 
                     // TODO: (optional) figure out how long the regex is taking and maybe use RegexOptions.Compiled isntead: http://www.dotnetperls.com/regexoptions-compiled
                 }
