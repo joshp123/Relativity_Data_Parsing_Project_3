@@ -137,10 +137,10 @@ namespace Relativity_Data_Parsing_Project_3
             sw.Start();
 
             List<Event> events = new List<Event>();
+
             foreach (var file in filepaths)
             {
-                events.Concat(ParseFile(file));
-                // parse earch file specified and add the list returned from ParseFile() to the end of the existing list
+                events.AddRange(ParseFile(file));
             }
             
             sw.Stop();
@@ -166,13 +166,13 @@ namespace Relativity_Data_Parsing_Project_3
 
             double averageT2 = (from item in goodEvents select item.time_2).Average();
             Console.WriteLine("\nStep 1 Calculations: ");
-            Console.WriteLine("Number of bad events: \t" + numberOfBadEvents);
+            Console.WriteLine("Number of bad events \t=" + numberOfBadEvents);
             Console.WriteLine("Average kinetic energy \t= " + averageEvergy + " MeV");
             Console.WriteLine("Average t2 \t\t=  " + averageT2 + " ns");
 
-            Console.WriteLine("Transforming Event [0]");
-            Console.WriteLine("Beta, Gamma, Momentum, Energy Transform (MeV), Particle Lifetime (ns)");
-            Console.WriteLine("{0}, {1}, {2}, {3}, {4}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy(), events[0].ParticleLiftetime());
+            //Console.WriteLine("Transforming Event [0]");
+            //Console.WriteLine("Beta, Gamma, Momentum, Energy Transform (MeV), Particle Lifetime (ns)");
+            //Console.WriteLine("{0}, {1}, {2}, {3}, {4}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy(), events[0].ParticleLiftetime());
 
             var transformedEnergies = (from item in goodEvents
                                        select item.TransformEnergy())
@@ -217,20 +217,31 @@ namespace Relativity_Data_Parsing_Project_3
             Dictionary<double, int> histogram = new Dictionary<double, int>();
             int numberOfBins = 100;
             // TODO: implement a clever algorithm to determine bin numbers and sizes
-            data.Sort();   
-            
-            double lowerBound = data.Min();
+            data.Sort();
+
+            double lowerBound = Math.Floor(data.Min());
+            // use math floor so that the bins bounds are integers/decimals
             double upperBound = data.Max();
             double rangeOfData = upperBound - lowerBound;
-                        
-            int interval = Convert.ToInt32(Math.Ceiling(rangeOfData / numberOfBins));
+
+            double binWidth = Math.Ceiling(rangeOfData / numberOfBins);
+
+            // round the bin width to 0 decimal places if > 1 else round to 1 D.P (so the histograms are visually nicer)
+            if (binWidth > 1)
+            {
+                binWidth = Math.Round(binWidth, 0);
+            }
+            else
+            {
+                binWidth = Math.Round(binWidth, 1);
+            }
 
             // the interval between every 1% of the data
 
             for (int i = 0; i < numberOfBins; i++)
             {
-                double binLowerBound = data.Min() + (i * interval);
-                double binUpperBound = binLowerBound + interval;
+                double binLowerBound = lowerBound + (i * binWidth);
+                double binUpperBound = binLowerBound + binWidth;
                 int frequency = data.Count(item => ((item >= binLowerBound) && (item < binUpperBound)) == true);
                 histogram[binLowerBound] = frequency;
 
