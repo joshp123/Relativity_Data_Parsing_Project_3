@@ -145,7 +145,11 @@ namespace Relativity_Data_Parsing_Project_3
             
             sw.Stop();
 
-            Console.WriteLine("File read completed, {0} events parsed in {1} seconds", events.Count, sw.ElapsedMilliseconds.ToString());
+            List<string> statistics = new List<string>();
+
+            // instead of using Console.WriteLine() use List.Add() and just get a list of strings to print to a file later on
+            // e.g p3data7stats.txt
+            statistics.Add("File read completed, " + events.Count + " events parsed in " + sw.ElapsedMilliseconds.ToString() + " seconds");
 
 
             // take some quick data on the events
@@ -155,6 +159,9 @@ namespace Relativity_Data_Parsing_Project_3
                               select item)
                               .ToList();
             // get the positive energy events, store in a new List goodEvents
+            // turns out this crashes if you read in 11m numbers on a 32bit system,
+            // but switch to targeting 64bit and everything literally Just Works. thanks bill gates
+
 
             var badEvents = from item in events
                             where item.energy < 0
@@ -165,14 +172,16 @@ namespace Relativity_Data_Parsing_Project_3
             double averageEvergy = (from item in goodEvents select item.energy).Average();
 
             double averageT2 = (from item in goodEvents select item.time_2).Average();
-            Console.WriteLine("\nStep 1 Calculations: ");
-            Console.WriteLine("Number of bad events \t=" + numberOfBadEvents);
-            Console.WriteLine("Average kinetic energy \t= " + averageEvergy + " MeV");
-            Console.WriteLine("Average t2 \t\t=  " + averageT2 + " ns");
+            statistics.Add("\nStep 1 Calculations: ");
+            statistics.Add("Number of bad events \\tt= " + numberOfBadEvents);
+            statistics.Add("Average kinetic energy \t\t= " + averageEvergy + " MeV");
+            statistics.Add("Average t2 \t\t\t= " + averageT2 + " ns");
 
-            //Console.WriteLine("Transforming Event [0]");
-            //Console.WriteLine("Beta, Gamma, Momentum, Energy Transform (MeV), Particle Lifetime (ns)");
-            //Console.WriteLine("{0}, {1}, {2}, {3}, {4}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy(), events[0].ParticleLiftetime());
+            // testing only
+
+            //statistics.Add("Transforming Event [0]");
+            //statistics.Add("Beta, Gamma, Momentum, Energy Transform (MeV), Particle Lifetime (ns)");
+            //statistics.Add("{0}, {1}, {2}, {3}, {4}", events[0].Beta(), events[0].Gamma(), events[0].Momentum(), events[0].TransformEnergy(), events[0].ParticleLiftetime());
 
             var transformedEnergies = (from item in goodEvents
                                        select item.TransformEnergy())
@@ -189,21 +198,34 @@ namespace Relativity_Data_Parsing_Project_3
 
             var averageTransformedEnergy = transformedEnergies.Average();
             var averageParticleLifetime = lifetimes.Average();
-            Console.WriteLine("\nStep 2 Calculations: ");
-            Console.WriteLine("Largest transformed energy \t= " + largestTransformedEnergy + " MeV");
-            Console.WriteLine("Longest particle lifetime \t= " + longestParticleLifetime + " ns");
-            Console.WriteLine("Average transformed energy \t= " + averageTransformedEnergy + " MeV");
-            Console.WriteLine("Average particle lifetime \t= " + averageParticleLifetime + " ns");
-
-            // TODO: i mean i could write these to a separate file isntead of the console but it's
-            // kinda pointless having a 4 line text file with this data but it's also stupid to
-            // stick it in a .csv file and deliberately break it to shoehorn some stats in there
+            statistics.Add("\n\nStep 2 Calculations: ");
+            statistics.Add("Largest transformed energy \t= " + largestTransformedEnergy + " MeV");
+            statistics.Add("Longest particle lifetime \t= " + longestParticleLifetime + " ns");
+            statistics.Add("Average transformed energy \t= " + averageTransformedEnergy + " MeV");
+            statistics.Add("Average particle lifetime \t= " + averageParticleLifetime + " ns");
 
             var energyHistogram = ContinuousDataToHistogram(transformedEnergies);
-            // var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
+            var lifetimesHistogram = ContinuousDataToHistogram(lifetimes);
 
-            DictionaryToCSV(energyHistogram, filename);
-            // TODO: fix filenames so there's an energy one and a times one e.g histogram_energies_path28482.dat.csv                  
+            var energyFilename = filename + "_energy";
+            var lifetimesFilename = filename + "_lifetime";
+            DictionaryToCSV(energyHistogram, energyFilename);
+            DictionaryToCSV(lifetimesHistogram, lifetimesFilename);
+
+            
+            // write all the stats that were previously written to the console to a file, e.g p3data7.dat_stats.txt
+            // a separate file is necessary because the other 2 are CSV files, adding these statistics would mean
+            // they are no longer valid CSV, and breaking them for no reason is silly
+
+            StreamWriter statsFile = new StreamWriter(filename + "_stats.txt", false);
+            // second arugment overwrites file if it exists
+            foreach (var line in statistics)
+            {
+                statsFile.WriteLine(line);
+            }
+            statsFile.Close();
+
+
         }
 
         /// <summary>
@@ -224,19 +246,25 @@ namespace Relativity_Data_Parsing_Project_3
             double upperBound = data.Max();
             double rangeOfData = upperBound - lowerBound;
 
-            double binWidth = Math.Ceiling(rangeOfData / numberOfBins);
+            double binWidth = rangeOfData / numberOfBins;
 
-            // round the bin width to 0 decimal places if > 1 else round to 1 D.P (so the histograms are visually nicer)
-            if (binWidth > 1)
+            // round the bin width to 0 decimal places if > 5 else round to 1 D.P (so the histograms are visually nicer and intervals are sensible)
+
+            if (binWidth > 5)
             {
-                binWidth = Math.Round(binWidth, 0);
+                binWidth = Math.Ceiling(binWidth);
+                // round up to nearest integer
+                // we're rounding up to ensure binWidth * numberOfBins is never greater than the range of data
             }
             else
             {
-                binWidth = Math.Round(binWidth, 1);
+                // multiply by 10, ceiling, divide by ten
+                // i.e. round up but to 1 d.p.
+                binWidth = binWidth * 10;
+                binWidth = Math.Ceiling(binWidth);
+                binWidth = binWidth / 10;
             }
-
-            // the interval between every 1% of the data
+            
 
             for (int i = 0; i < numberOfBins; i++)
             {
@@ -248,11 +276,9 @@ namespace Relativity_Data_Parsing_Project_3
                 // using the dictionary key of the lower bound of the bin, count how many items belong in the bin using a LINQ query
             }
 
-            // data.Count(item => (item <= data.Min() + (interval * numberOfBins) == true);
-            // ignore this for now
-
             // at this point histogram should have 100 keys, where they each represent the lower bound of an individual group
             // and a count associated with them
+            // Some are going to be zero because we rounded the binWidth, theroetically less than 10% of them
 
             return histogram;
         }
@@ -279,7 +305,7 @@ namespace Relativity_Data_Parsing_Project_3
             );
             // this will break if any of the arguments have "," in them
 
-            string fullFilename = "histogram_" + filename + "_.csv";
+            string fullFilename = "histogram_" + filename + ".csv";
 
             while (true)
             {
