@@ -40,7 +40,7 @@ namespace Relativity_Data_Parsing_Project_3
         /// </summary>
         /// <remarks>
         /// Contains fields for times and energy
-        /// TODO: (optional) measure performance of class vs struct
+        /// TODO: (optional) measure performance of class vs struct (class will probably be worse b/c it only contains doubles)
         /// </remarks>
         public struct Event
         {
@@ -119,7 +119,6 @@ namespace Relativity_Data_Parsing_Project_3
             public double TransformEnergy()
             {
                 return this.Gamma() * (this.TotalEnergy() - (this.Momentum() * this.Beta()));
-                // TODO: make this actually give the correct value
             }
 
         }
@@ -238,7 +237,7 @@ namespace Relativity_Data_Parsing_Project_3
         {
             Dictionary<double, int> histogram = new Dictionary<double, int>();
             int numberOfBins = 100;
-            // TODO: implement a clever algorithm to determine bin numbers and sizes
+            // TODO: (if i'm feeling really dedicated for some reason) implement a clever algorithm to determine bin numbers and sizes
             data.Sort();
 
             double lowerBound = Math.Floor(data.Min());
@@ -297,7 +296,7 @@ namespace Relativity_Data_Parsing_Project_3
         /// a Windows forms filepicker and making the whole app windows forms</remarks>
         /// <returns>Returns -1 because i haven't actually written the bit to do return codes yet</returns>
         /// 
-        static int DictionaryToCSV<TKey, TValue>(Dictionary<TKey, TValue> dictionary, string filename)
+        static void DictionaryToCSV<TKey, TValue>(Dictionary<TKey, TValue> dictionary, string filename)
         {
 
             String csv = String.Join(Environment.NewLine,
@@ -344,10 +343,7 @@ namespace Relativity_Data_Parsing_Project_3
                 }
             }
            
-            // TODO: update this with proper return codes
-
-
-            return -1;
+           return;
         }
 
         /// <summary>
